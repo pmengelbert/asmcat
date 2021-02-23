@@ -6,7 +6,6 @@ buffer: .space 1024
 .globl main
 
 main:
-
 	#open the file
 	movl $0x02, %eax # Syscall #2 = Open
 	mov $filename, %rdi #first argument: filename; 16(%rsp) is argv[1].
@@ -33,17 +32,25 @@ main:
 	xorq %rdx, %rdx # Zero this out to get to the beginning of the file
 	syscall
 
+	pushq %r8
+	pushq %r9
+	movq %r9, %rdi
+	call malloc
+	movq %rax, %r15
+	popq %r9
+	popq %r8
+
 	#read the file
 	movl $0, %eax # syscall #0 = read
 	movl %r8d, %edi # first argument: file descriptor
-	movq $buffer, %rsi # second argument: address of a writeable buffer
+	movq %r15, %rsi # second argument: address of a writeable buffer
 	movl %r9d, %edx # third argument: number of bytes to write
 	syscall
 
 	#print the file
 	movl $1, %eax # syscall #1 = write
 	movl $1, %edi # first argument: file descriptor. 1 is stdout.
-	movq $buffer, %rsi # second argument: address of data to write.
+	movq %r15, %rsi # second argument: address of data to write.
 	movl %r9d, %edx # third argument: number of bytes to write
 	syscall
 
@@ -52,9 +59,13 @@ main:
 	movl %r8d, %edi # first arg: file descriptor number
 	syscall
 
+	# free the buffer
+	movq %r15, %rdi
+	call free
+
 	#set the exit code
 	movl $60, %eax # syscall #60 = exit
-	movl $0, %edi # exit 0 = success
+	movq $0, %rdi # exit 0 = success
 	syscall
 
 find_length:
