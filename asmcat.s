@@ -1,4 +1,5 @@
 .section .data
+filename: .asciz "/home/pme/butts"
 buffer: .space 1024
 
 .section .text
@@ -8,7 +9,7 @@ main:
 
 	#open the file
 	movl $0x02, %eax # Syscall #2 = Open
-	mov 16(%rsp), %rdi #first argument: filename; 16(%rsp) is argv[1].
+	mov $filename, %rdi #first argument: filename; 16(%rsp) is argv[1].
 	movl $0, %esi #second argument: flags. 0 means read-only.
 	syscall
 
