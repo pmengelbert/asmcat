@@ -1,22 +1,19 @@
 .section .data
+buffer: .space 1024
 
 .section .text
 .globl main
 
 main:
-	movq 16(%rsp), %r14
 
 	#open the file
 	movl $0x02, %eax # Syscall #2 = Open
-	movq %r14, %rdi #first argument: filename; 16(%rsp) is argv[1].
+	mov 16(%rsp), %rdi #first argument: filename; 16(%rsp) is argv[1].
 	movl $0, %esi #second argument: flags. 0 means read-only.
-	xorq %rdx, %rdx # third argument: file mask bits; not used here
 	syscall
 
 	#move the file descriptor to register 8
 	movl %eax, %r8d
-	testq %r8, %r8
-	jle error
 
 	#seek to the end of the file to discover its length
 	movl $8, %eax # syscall #8 = lseek
@@ -26,14 +23,7 @@ main:
 	syscall
 
 	#store the file size
-	movl %eax, %r9d
-#testl %r9d, %r9d
-#	jle error
-
-	#allocate a buffer to hold the file
-	movl $1024, %edi
-	call malloc
-	movq %rax, %r15
+	movq %rax, %r9
 
 	#seek to the beginning of the file to read it
 	movl $8, %eax # syscall #8 = lseek
@@ -45,14 +35,14 @@ main:
 	#read the file
 	movl $0, %eax # syscall #0 = read
 	movl %r8d, %edi # first argument: file descriptor
-	movq %r15, %rsi # second argument: address of a writeable buffer
+	movq $buffer, %rsi # second argument: address of a writeable buffer
 	movl %r9d, %edx # third argument: number of bytes to write
 	syscall
 
 	#print the file
 	movl $1, %eax # syscall #1 = write
 	movl $1, %edi # first argument: file descriptor. 1 is stdout.
-	movq %r15, %rsi # second argument: address of data to write.
+	movq $buffer, %rsi # second argument: address of data to write.
 	movl %r9d, %edx # third argument: number of bytes to write
 	syscall
 
@@ -66,7 +56,15 @@ main:
 	movl $0, %edi # exit 0 = success
 	syscall
 
-error:
-	movl $60, %eax # syscall #60 = exit
-	movl $1, %edi # exit 0 = success
-	syscall
+find_length:
+	movq %rdi, %r10
+	xorq %r11, %r11
+.L_find_null:
+	cmpb $0, (%r10,%r11)
+	je .L_end_find_null
+	incq %r11
+	jmp .L_find_null
+.L_end_find_null:
+	movq %r11, %rax
+	ret
+
