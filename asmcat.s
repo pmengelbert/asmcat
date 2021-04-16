@@ -6,22 +6,16 @@
 main:
 	# open the file
 	movl $0x02, %eax # syscall #2 = open.
-	subq $0x01, %rdi
-	jz stdin
 	mov 8(%rsi), %rdi # first argument: filename; 8(%rsi) is argv[1].
 	movl $0, %esi # second argument: flags. 0 means read-only.
 	xorq %rdx, %rdx # this argument isn't used here, but zero it out for peace of mind.
 	syscall # returns the file descriptor number in %rax
-	jmp continue
 
 	# move the file descriptor to register 8 for later use.
 	/*
 	   r8d -> file descriptor
 	*/
-stdin:
-	xorq %rax, %rax # file descriptor zero is stdin
-continue:
-	movq %rax, %r8
+	movl %eax, %r8d
 
 	# seek to the end of the file to discover its length.
 	movl $8, %eax # syscall #8 = lseek. see lseek(2).
