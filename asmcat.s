@@ -5,10 +5,7 @@
 .globl main
 
 main:
-	# open the file
-	cmpq $0x01, %rdi
-	je stdin
-
+	pushq %rdi
 	movl $12, %eax
 	xorq %rdi, %rdi
 	syscall
@@ -19,6 +16,12 @@ main:
 	leaq -MAX_READ_BYTES(%rax), %r13
 	cmp $0, %rax
 	jl exit
+
+	popq %rdi
+	# open the file
+	cmpq $0x01, %rdi
+	je stdin
+
 
 	movl $0x02, %eax # syscall #2 = open.
 	mov 8(%rsi), %rdi # first argument: filename; 8(%rsi) is argv[1].
