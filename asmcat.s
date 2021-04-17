@@ -1,32 +1,33 @@
 .section .data
-.set MAX_READ_BYTES, 0x7fff
+.set MAX_READ_BYTES, 0xffff
 
 .section .text
-.globl main
+.globl _start
 
-main:
-	pushq %rdi # save the value of argc somewhere else
+_start:
+	movq (%rsp), %r10 # save the value of argc somewhere else
+	movq 16(%rsp), %r9 # save the value of argv[1] somewhere else
+
 	movl $12, %eax # syscall 12 is brk. see brk(2)
 	xorq %rdi, %rdi # call with 0 as first arg to get current end of memory
 	syscall
-	pushq %rax # this is the address of the current end of memory
+	movq %rax, %r8 # this is the address of the current end of memory
 
 	leaq MAX_READ_BYTES(%rax), %rdi # let this be the new end of memory
 	movl $12, %eax # syscall 12, brk
 	syscall
-	popq %r14 # retrieve the address of the old end-of-memory
-	cmp %r14, %rax # compare the two; if the allocation failed, these will be equal
+	cmp %r8, %rax # compare the two; if the allocation failed, these will be equal
 	je exit
 
 	leaq -MAX_READ_BYTES(%rax), %r13 # store the start of the free area in %r13
 
-	popq %rdi # retrieve the value of argc
+	movq %r10, %rdi # retrieve the value of argc
 	cmpq $0x01, %rdi # if there are no cli args, process stdin instead
 	je stdin
 
 	# open the file
 	movl $0x02, %eax # syscall #2 = open.
-	mov 8(%rsi), %rdi # first argument: filename; 8(%rsi) is argv[1].
+	movq %r9, %rdi
 	movl $0, %esi # second argument: flags. 0 means read-only.
 	xorq %rdx, %rdx # this argument isn't used here, but zero it out for peace of mind.
 	syscall # returns the file descriptor number in %rax
