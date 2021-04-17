@@ -5,6 +5,8 @@
 
 main:
 	# open the file
+	cmpq $0x01, %rdi
+	je penis
 	movl $0x02, %eax # syscall #2 = open.
 	mov 8(%rsi), %rdi # first argument: filename; 8(%rsi) is argv[1].
 	movl $0, %esi # second argument: flags. 0 means read-only.
@@ -69,7 +71,38 @@ main:
 	movl $0x03, %eax # syscall #3 = close.
 	movl %r8d, %edi # first arg: file descriptor number.
 	syscall # result ignored.
+	jmp cleanup
 
+penis:
+	movq $0xff, %rdi # allocate the same number of bytes as are in the file.
+	call malloc # do the allocation.
+	movq %rax, %r15
+	/*
+	   r8d -> file descriptor
+	   r9 -> file length
+	   r15 -> pointer to allocated memory
+	*/
+
+	# read the file.
+	movl $0, %eax # syscall #0 = read.
+	movl $0x0000, %edi # first argument: file descriptor.
+	movq %r15 /* pointer to allocated memory */, %rsi # second argument: address of a writeable buffer.
+	movl $0xff, %edx # third argument: number of bytes to write.
+	syscall # result ignored.
+
+	# print the file
+	movl $1, %eax # syscall #1 = write.
+	movl $1, %edi # first argument: file descriptor. 1 is stdout.
+	movq %r15, %rsi # second argument: address of data to write.
+	movl %r9d, %edx # third argument: number of bytes to write.
+	syscall # result ignored.
+
+	# close the file
+	movl $0x03, %eax # syscall #3 = close.
+	movl %r8d, %edi # first arg: file descriptor number.
+	syscall # result ignored.
+
+cleanup:
 	# free the buffer
 	movq %r15, %rdi # first and only argument: the address of the memory to free.
 	call free
