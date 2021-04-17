@@ -1,5 +1,5 @@
 .section .data
-.set MAX_READ_BYTES, 0x7ffff000
+.set MAX_READ_BYTES, 0x7fff
 
 .section .text
 .globl main
@@ -8,6 +8,18 @@ main:
 	# open the file
 	cmpq $0x01, %rdi
 	je stdin
+
+	movl $12, %eax
+	xorq %rdi, %rdi
+	syscall
+
+	leaq MAX_READ_BYTES(%rax), %rdi
+	movl $12, %eax
+	syscall
+	leaq -MAX_READ_BYTES(%rax), %r13
+	cmp $0, %rax
+	jl exit
+
 	movl $0x02, %eax # syscall #2 = open.
 	mov 8(%rsi), %rdi # first argument: filename; 8(%rsi) is argv[1].
 	movl $0, %esi # second argument: flags. 0 means read-only.
@@ -26,7 +38,7 @@ read_and_write:
 	# read the file.
 	movl %edi, %r14d
 	movl $0, %eax # syscall #0 = read.
-	leaq 10000(%rsp) /* pointer to allocated memory */, %rsi # second argument: address of a writeable buffer.
+	movq %r13 /* pointer to allocated memory */, %rsi # second argument: address of a writeable buffer.
 	movl $MAX_READ_BYTES, %edx # third argument: number of bytes to write.
 	syscall # num bytes read in %rax
 	movl %eax, %r15d
@@ -34,7 +46,7 @@ read_and_write:
 	# print the file
 	movl $1, %eax # syscall #1 = write.
 	movl $1, %edi # first argument: file descriptor. 1 is stdout.
-	leaq 10000(%rsp), %rsi # second argument: address of data to write.
+	movq %r13, %rsi # second argument: address of data to write.
 	movl %r15d, %edx # third argument: number of bytes to write.
 	syscall # result ignored.
 	ret
