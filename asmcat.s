@@ -32,18 +32,20 @@ _start:
 	xorq %rdx, %rdx # this argument isn't used here, but zero it out for peace of mind.
 	syscall # returns the file descriptor number in %rax
 	movl %eax, %edi
+	movl %edi, %r12d # first argument: file descriptor.
 	call read_and_write
 	jmp cleanup
 
 stdin:
 	movl $0x0000, %edi # first argument: file descriptor.
+	movl %edi, %r12d # first argument: file descriptor.
 	call read_and_write
 	jmp cleanup
 
 read_and_write:
 	# read the file.
-	movl %edi, %r14d
 	movl $0, %eax # syscall #0 = read.
+	movl %r12d, %edi
 	movq %r13 /* pointer to allocated memory */, %rsi # second argument: address of a writeable buffer.
 	movl $MAX_READ_BYTES, %edx # third argument: number of bytes to write.
 	syscall # num bytes read in %rax
@@ -55,6 +57,8 @@ read_and_write:
 	movq %r13, %rsi # second argument: address of data to write.
 	movl %r15d, %edx # third argument: number of bytes to write.
 	syscall # result ignored.
+	cmpq $MAX_READ_BYTES, %r15
+	je read_and_write
 	ret
 
 cleanup:
