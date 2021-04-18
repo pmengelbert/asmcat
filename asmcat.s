@@ -1,5 +1,5 @@
 .section .data
-.set MAX_READ_BYTES, 0xffff
+.set MAX_READ_BYTES, 0x1000
 
 .section .text
 .globl _start
@@ -57,8 +57,8 @@ read_and_write:
 	movq %r13, %rsi # second argument: address of data to write.
 	movl %r15d, %edx # third argument: number of bytes to write.
 	syscall # result ignored.
-	cmpq $MAX_READ_BYTES, %r15
-	je read_and_write
+	testq %r15, %r15
+	jnz read_and_write
 	ret
 
 cleanup:
