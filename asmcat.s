@@ -25,7 +25,7 @@ read_and_write:
 	movl $MAX_READ_BYTES, %edx
 	syscall
 	testl %eax, %eax
-	jg exit
+	jz exit
 	movl %eax, %edx
 
 	movl $1, %eax
@@ -35,17 +35,6 @@ read_and_write:
 	jg read_and_write
 
 exit:
-	pushq %rax
-	testl %r15d, %r15d
-	jz final_exit
-
-	movl $3, %eax
-	movl %r15d, %edi
-	syscall
-
-final_exit:
+	movl %eax, %edi
 	movl $60, %eax
-	popq %rdi
 	syscall
-
-
