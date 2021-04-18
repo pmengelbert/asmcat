@@ -1,5 +1,5 @@
 .section .data
-.set MAX_READ_BYTES, 0x1
+.set MAX_READ_BYTES, 0xffff
 
 .section .text
 .globl _start
