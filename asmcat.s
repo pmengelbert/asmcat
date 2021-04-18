@@ -1,5 +1,6 @@
-.section .data
-.set MAX_READ_BYTES, 0x1000
+MAX_READ_BYTES = 0x10000
+.section .bss
+.lcomm poobuttz, 0x10000
 
 .section .text
 .globl _start
@@ -46,7 +47,7 @@ read_and_write:
 	# read the file.
 	movl $0, %eax # syscall #0 = read.
 	movl %r12d, %edi
-	movq %r13 /* pointer to allocated memory */, %rsi # second argument: address of a writeable buffer.
+	movq $poobuttz /* pointer to allocated memory */, %rsi # second argument: address of a writeable buffer.
 	movl $MAX_READ_BYTES, %edx # third argument: number of bytes to write.
 	syscall # num bytes read in %rax
 	movl %eax, %r15d
@@ -54,7 +55,7 @@ read_and_write:
 	# print the file
 	movl $1, %eax # syscall #1 = write.
 	movl $1, %edi # first argument: file descriptor. 1 is stdout.
-	movq %r13, %rsi # second argument: address of data to write.
+	movq $poobuttz, %rsi # second argument: address of data to write.
 	movl %r15d, %edx # third argument: number of bytes to write.
 	syscall # result ignored.
 	testq %r15, %r15
