@@ -1,10 +1,7 @@
 .PHONY: clean
 
-asmcat: asmcat.o
-	ld -o asmcat asmcat.o
-
-asmcat.o:
-	as -o asmcat.o asmcat.s
+asmcat:
+	gcc -nostdlib --static -o asmcat -v asmcat.S
 
 clean:
 	rm asmcat.o asmcat || true
