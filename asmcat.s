@@ -6,14 +6,14 @@ MAX_READ_BYTES = 1 << 16
 .globl _start
 
 _start:
-	xorl %r15d, %r15d # default to file descriptor 0 = stdin
-	popq %rdi # this is argc
+	popq %rdi
 	decq %rdi
-	jz read_and_write # if argc was 1, it will now be zero, in which case, read from stdin
+	movl %edi, %r15d
+	jz read_and_write
 
-open_file: # otherwise open the file and save the descriptor in %r15d
-	movl $2, %eax #
-	movl 8(%rsp), %edi
+open_file:
+	movl $2, %eax
+	movq 8(%rsp), %rdi
 	xorq %rsi, %rsi
 	syscall
 	movl %eax, %r15d
